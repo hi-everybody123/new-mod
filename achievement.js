@@ -1,23 +1,27 @@
-// achievement.js
-(function(){
-    const modName = "MagicallyBadMod";
+javascript:(function(){
+    function waitForWizard(){
+        if (Game.Objects["Wizard tower"] && Game.Objects["Wizard tower"].minigame) {
+            initMod();
+        } else {
+            setTimeout(waitForWizard, 1000);
+        }
+    }
 
-    // Register mod with Cookie Clicker
-    Game.registerMod(modName, {
-        init: function() {
-            let failStreak = 0;
+    function initMod(){
+        let failStreak = 0;
 
-            // Ensure achievement exists
-            if (!Game.Achievements["Magically Bad"]) {
-                new Game.Achievement(
-                    "Magically Bad",
-                    "Maybe you should just quit this whole magic thing.",
-                    [16,5]
-                );
-            }
+        // Ensure achievement exists
+        if (!Game.Achievements["Magically Bad"]) {
+            new Game.Achievement(
+                "Magically Bad",
+                "Maybe you should just quit this whole magic thing.",
+                [16,5]
+            );
+        }
 
-            // Create on-screen counter
-            const counter = document.createElement("div");
+        // On-screen counter
+        if (!document.getElementById("magicallyBadCounter")) {
+            let counter = document.createElement("div");
             counter.id = "magicallyBadCounter";
             counter.style.position = "fixed";
             counter.style.top = "10px";
@@ -29,39 +33,39 @@
             counter.style.zIndex = 10000;
             counter.innerHTML = "Magically Bad streak: 0";
             document.body.appendChild(counter);
+        }
 
-            // Notify mod loaded
-            Game.Notify("Magically Bad Mod Loaded","Tracking Gambler's Fever Dream failures.",[16,5]);
-            console.log("[Magically Bad] Mod initialized.");
+        Game.Notify("Magically Bad Mod Loaded", "Tracking Gambler's Fever Dream failures.", [16,5]);
+        console.log("[Magically Bad] Mod initialized.");
 
-            const wizard = Game.Objects["Wizard tower"].minigame;
-            const originalCast = wizard.castSpell;
+        const wizard = Game.Objects["Wizard tower"].minigame;
+        const counter = document.getElementById("magicallyBadCounter");
+        const originalCast = wizard.castSpell;
 
-            wizard.castSpell = function(spell){
-                let result = originalCast.apply(this, arguments);
+        wizard.castSpell = function(spell){
+            let result = originalCast.apply(this, arguments);
 
-                if (spell.name === "Gambler's fever dream") {
-                    // Only count failures due to no eligible spells
-                    const eligible = Object.values(wizard.spells).filter(s => s.name !== "Gambler's fever dream");
+            if (spell.name === "Gambler's fever dream") {
+                const eligible = Object.values(wizard.spells).filter(s => s.name !== "Gambler's fever dream");
 
-                    if (eligible.length === 0) {
-                        failStreak++;
-                        counter.innerHTML = "Magically Bad streak: " + failStreak;
-                        Game.Popup("GFD failed (no eligible spells)<br>Streak: "+failStreak);
-                    } else {
-                        failStreak = 0;
-                        counter.innerHTML = "Magically Bad streak: 0";
-                    }
-
-                    // Unlock achievement at 100
-                    if (failStreak >= 100 && !Game.Achievements["Magically Bad"].won) {
-                        Game.Win("Magically Bad");
-                        Game.Notify("Achievement unlocked!","Magically Bad",[16,5]);
-                    }
+                if (eligible.length === 0) {
+                    failStreak++;
+                    counter.innerHTML = "Magically Bad streak: " + failStreak;
+                    Game.Popup("GFD failed (no eligible spells)<br>Streak: "+failStreak);
+                } else {
+                    failStreak = 0;
+                    counter.innerHTML = "Magically Bad streak: 0";
                 }
 
-                return result;
-            };
-        }
-    });
+                if (failStreak >= 100 && !Game.Achievements["Magically Bad"].won) {
+                    Game.Win("Magically Bad");
+                    Game.Notify("Achievement unlocked!","Magically Bad",[16,5]);
+                }
+            }
+
+            return result;
+        };
+    }
+
+    waitForWizard();
 })();
